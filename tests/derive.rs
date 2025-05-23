@@ -33,7 +33,7 @@ mod full_limbs {
         use ff::Field;
         use rand::rngs::OsRng;
 
-        let _ = F384p::random(OsRng);
+        let _ = F384p::try_random(OsRng).unwrap();
     }
 }
 
@@ -154,5 +154,5 @@ fn sqrt() {
     test(Fp::ZERO);
     test(Fp::ONE);
     use rand::rngs::OsRng;
-    test(Fp::random(OsRng));
+    test(Fp::try_random(OsRng).unwrap());
 }

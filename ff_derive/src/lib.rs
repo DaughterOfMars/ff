@@ -1282,6 +1282,30 @@ fn prime_field_impl(
                 }
             }
 
+            /// Computes a uniformly random element using rejection sampling.
+            fn try_random<R: ::ff::derive::rand_core::TryRngCore>(mut rng: R) -> Result<Self, R::Error> {
+                loop {
+                    let mut tmp = {
+                        let mut repr = [0u64; #limbs];
+                        for i in 0..#limbs {
+                            repr[i] = rng.try_next_u64()?;
+                        }
+                        #name(repr)
+                    };
+
+                    // Mask away the unused most-significant bits.
+                    // Note: In some edge cases, `REPR_SHAVE_BITS` could be 64, in which case
+                    // `0xfff... >> REPR_SHAVE_BITS` overflows. So use `checked_shr` instead.
+                    // This is always sufficient because we will have at most one spare limb
+                    // to accommodate values of up to twice the modulus.
+                    tmp.0[#top_limb_index] &= 0xffffffffffffffffu64.checked_shr(REPR_SHAVE_BITS).unwrap_or(0);
+
+                    if tmp.is_valid() {
+                        return Ok(tmp)
+                    }
+                }
+            }
+
             #[inline]
             fn is_zero_vartime(&self) -> bool {
                 self.0.iter().all(|&e| e == 0)
